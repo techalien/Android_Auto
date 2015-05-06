@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class MainActivity extends ActionBarActivity {
 
     TextView myLabel;
+    TextView TempSet;
     EditText myTextbox;
     BluetoothAdapter mBluetoothAdapter;
     BluetoothSocket mmSocket;
@@ -32,6 +35,7 @@ public class MainActivity extends ActionBarActivity {
     int readBufferPosition;
     int counter;
     volatile boolean stopWorker;
+    SeekBar seekBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -42,14 +46,12 @@ public class MainActivity extends ActionBarActivity {
         Button openButton = (Button)findViewById(R.id.blue);
         Button on1Button = (Button)findViewById(R.id.on1);
         Button off1Button = (Button)findViewById(R.id.off1);
-        Button on2Button = (Button)findViewById(R.id.on2);
-        Button off2Button = (Button)findViewById(R.id.off2);
-        Button on3Button = (Button)findViewById(R.id.on3);
-        Button off3Button = (Button)findViewById(R.id.off3);
+
         Button closeButton = (Button)findViewById(R.id.cls);
         myLabel = (TextView)findViewById(R.id.textView2);
+        TempSet = (TextView)findViewById(R.id.seekvalue);
         //myTextbox = (EditText)findViewById(R.id.entry);
-
+        TempSet.setText(seekBar.getProgress());
         //Open Button
         openButton.setOnClickListener(new View.OnClickListener()
         {
@@ -77,78 +79,41 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        off1Button.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
+        off1Button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                try {
                     sendData(2);
+                } catch (IOException ex) {
                 }
-                catch (IOException ex) { }
             }
         });
 
-        //Send Button
-        on2Button.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    sendData(3);
-                }
-                catch (IOException ex) { }
-            }
-        });
 
-        off2Button.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    sendData(4);
-                }
-                catch (IOException ex) { }
-            }
-        });
-
-        //Send Button
-        on3Button.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    sendData(5);
-                }
-                catch (IOException ex) { }
-            }
-        });
-
-        off3Button.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    sendData(6);
-                }
-                catch (IOException ex) { }
-            }
-        });
 
         //Close button
-        closeButton.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                try {
                     closeBT();
-                }
-                catch (IOException ex) { }
+                } catch (IOException ex) { }
+            }
+        });
+
+        seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+            int prog = 0;
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                prog = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                TempSet.setText(prog);
             }
         });
     }
@@ -231,6 +196,11 @@ public class MainActivity extends ActionBarActivity {
                                         public void run()
                                         {
                                             myLabel.setText(data);
+                                            try {
+                                                tempThresh(Integer.parseInt(data));
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
                                         }
                                     });
                                 }
@@ -267,6 +237,12 @@ public class MainActivity extends ActionBarActivity {
         mmInputStream.close();
         mmSocket.close();
         myLabel.setText("Bluetooth Disconnected");
+    }
+
+    void tempThresh(int temp) throws IOException {
+        if(temp < seekBar.getProgress()) {
+            sendData(1);
+        }
     }
 }
 
